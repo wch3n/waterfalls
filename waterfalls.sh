@@ -3,9 +3,14 @@
 # works with standard vasp file structure
 # requires bc
 
-# vasp executable specific to the batch system
+N_MAX=3 # maximum iteration steps
+ETOL=0.005 # convergence tolerance in eV
+VASP_CMD=~/install/vasp.5.4.4/build/std/vasp # vasp runtime
+N_CPU=24 # for slurm 
+
+# vasp executable specific to the (slurm) batch system
 function submit {
-   srun -n 24 ~/install/vasp.5.4.4/build/std/vasp
+   srun -n $N_CPU $VASP_CMD
 }
 
 # read the relaxed energy (at 0 K) from OSZICAR
@@ -41,27 +46,28 @@ if [[ $next_n == "-1" ]]; then
    last_n=-1; next_n=0
 fi
 
-# iterates up to $n_max trials
-n_max=3
+# iteration block
 n=0
-while [[ $n < $n_max ]]; do
+while [[ $n < $N_MAX ]]; do
   if  grep -q E0 OSZICAR; then 
     save $next_n
   else
-    next_n=$((next_n-1))
-    last_n=$((last_n-1))
+    (( next_n-- ))
+    (( last_n-- ))
   fi
   [ -f CONTCAR ] && cp CONTCAR POSCAR
   submit
 
   e0=$(read_e0 $next_n)
   e0_new=$(read_e0 new)
-  if (( $(echo "$e0_new - $e0 > -0.005 && $e0_new - $e0 < 0.005" | bc -l) )); then
+  if (( $(echo "$e0_new - $e0 > -$ETOL && $e0_new - $e0 < $ETOL" | bc -l) )); then
     touch .done
     exit 0
   else
-    n=$((n+1))
+    (( n++ ))
     last_n=$next_n
-    next_n=$((next_n+1))
+    (( next_n++ ))
   fi
 done
+
+exit 0

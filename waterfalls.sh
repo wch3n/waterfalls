@@ -7,6 +7,7 @@ N_MAX=3 # maximum iteration steps
 ETOL=0.005 # convergence tolerance in eV
 VASP_CMD=~/install/vasp.5.4.4/build/std/vasp # vasp runtime
 N_CPU=24 # for slurm 
+VOL_THRES=1000 # skip the relaxation if the volume gets too large 
 
 # vasp executable specific to the (slurm) batch system
 function submit {
@@ -35,7 +36,17 @@ function save () {
 }
 
 # main
+# sanity check
 if [ -f .done ] || [ ! -f POSCAR ]; then exit 0; fi
+if [ -f OUTCAR ]; then
+  vol=`grep vol OUTCAR | tail -n 1 | awk '{print $5}'`
+  vol=${vol%.*}
+  if (( vol > $VOL_THRES )); then
+    touch .vol_too_large
+    exit 0
+  fi
+fi
+#
 last_n=$(for i in POSCAR*; do l=${i#*.}; done; echo $l| tail -n1)
 if [[ $last_n = 'POSCAR' ]]; then
   [ -f CONTCAR ] && last_n=-1 || last_n=-2
@@ -49,7 +60,7 @@ fi
 # iteration block
 n=0
 while [[ $n < $N_MAX ]]; do
-  if  grep -q E0 OSZICAR; then 
+  if grep -q E0 OSZICAR; then 
     save $next_n
   else
     (( next_n-- ))

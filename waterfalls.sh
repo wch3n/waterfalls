@@ -4,7 +4,7 @@
 # requires bc
 
 N_MAX=3 # maximum iteration steps
-ETOL=0.005 # convergence tolerance in eV
+ETOL=0.01 # convergence tolerance in eV
 VASP_CMD=~/install/vasp.5.4.4/build/std/vasp # vasp runtime
 N_CPU=24 # for slurm 
 VOL_THRES=1000 # skip the relaxation if the volume gets too large 
@@ -12,6 +12,10 @@ VOL_THRES=1000 # skip the relaxation if the volume gets too large
 # vasp executable specific to the (slurm) batch system
 function submit {
    srun -n $N_CPU $VASP_CMD
+   res=$?
+   if [ $res -ne 0 ]; then
+     exit 1
+   fi
 }
 
 # read the relaxed energy (at 0 K) from OSZICAR
@@ -74,6 +78,9 @@ while [[ $n < $N_MAX ]]; do
   if (( $(echo "$e0_new - $e0 > -$ETOL && $e0_new - $e0 < $ETOL" | bc -l) )); then
     touch .done
     exit 0
+  elif (( $(echo "$e0_new > $e0 + 0.02" | bc -l) )); then
+    touch .not_converging
+    exit 1
   else
     (( n++ ))
     last_n=$next_n

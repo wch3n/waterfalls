@@ -51,7 +51,8 @@ if [ -f OUTCAR ]; then
   fi
 fi
 #
-last_n=$(for i in POSCAR*; do l=${i#*.}; done; echo $l| tail -n1)
+a=$(for i in POSCAR*; do l=${i#*.}; echo $l; done)
+last_n=$(echo $a | tr " " "\n" | sort -g | tail -n1)
 if [[ $last_n = 'POSCAR' ]]; then
   [ -f CONTCAR ] && last_n=-1 || last_n=-2
 fi

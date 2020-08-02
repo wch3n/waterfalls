@@ -54,7 +54,7 @@ fi
 a=$(for i in POSCAR*; do l=${i#*.}; echo $l; done)
 last_n=$(echo $a | tr " " "\n" | sort -g | tail -n1)
 if [[ $last_n = 'POSCAR' ]]; then
-  [ -f CONTCAR ] && last_n=-1 || last_n=-2
+  [ -s CONTCAR ] && last_n=-1 || last_n=-2
 fi
 next_n=$((last_n+1))
 if [[ $next_n == "-1" ]]; then
@@ -71,7 +71,7 @@ while [[ $n < $N_MAX ]]; do
     (( next_n-- ))
     (( last_n-- ))
   fi
-  [ -f CONTCAR ] && cp CONTCAR POSCAR
+  [ -s CONTCAR ] && cp CONTCAR POSCAR
   submit
 
   e0=$(read_e0 $next_n)

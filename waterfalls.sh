@@ -1,13 +1,14 @@
 #!/bin/bash 
-# waterfalls 0.0.1 
+# waterfalls 0.0.2
 # works with standard vasp file structure
 # requires bc
 
-N_MAX=3 # maximum iteration steps
-ETOL=0.01 # convergence tolerance in eV
+N_MAX=4 # maximum iteration steps
+ETOL=0.002 # convergence tolerance in eV
 VASP_CMD=~/install/vasp.5.4.4/build/std/vasp # vasp runtime
 N_CPU=24 # for slurm 
-VOL_THRES=1000 # skip the relaxation if the volume gets too large 
+VOL_THRES=1500 # skip the relaxation if the volume gets too large 
+CONV_THR=0.1
 
 # vasp executable specific to the (slurm) batch system
 function submit {
@@ -36,7 +37,8 @@ function save () {
   cp POSCAR POSCAR.$1
   cp OSZICAR OSZICAR.$1
   cp OUTCAR OUTCAR.$1
-  cp vasprun.xml vasprun.xml.$1
+  #cp vasprun.xml vasprun.xml.$1
+  [ -s CHGCAR ] && cp CHGCAR CHGCAR.$1
 }
 
 # main
@@ -79,7 +81,7 @@ while [[ $n < $N_MAX ]]; do
   if (( $(echo "$e0_new - $e0 > -$ETOL && $e0_new - $e0 < $ETOL" | bc -l) )); then
     touch .done
     exit 0
-  elif (( $(echo "$e0_new > $e0 + 0.02" | bc -l) )); then
+  elif (( $(echo "$e0_new > $e0 + $CONV_THR" | bc -l) )); then
     touch .not_converging
     exit 1
   else

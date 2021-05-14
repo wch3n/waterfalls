@@ -1,6 +1,4 @@
 #!/bin/bash
-# job submission script 
-# usage: ./submit.sh $VASP_WORKDIR
 
 if [ -n "$1" ]
 then
@@ -8,7 +6,7 @@ then
     if [ ! -d $JOB ]; then
          echo "No $JOB found. Exiting."
          exit 1
-    elif grep -q $JOB <(checkjob); then
+    elif grep -q $(pwd -P)/$JOB <(listjob.sh); then
         echo "$JOB already in queue. Aborting."
         exit 1
     fi
@@ -19,7 +17,6 @@ fi
 
 cd $PWD/$JOB
 
-# adjust the batch script if needed
 cat > vasp.sh <<END
 #!/bin/bash
 
@@ -38,6 +35,7 @@ ulimit -s unlimited
 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
 module load intel
 ~/bin/waterfalls.sh
+
 END
 
 sbatch vasp.sh

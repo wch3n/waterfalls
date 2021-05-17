@@ -81,7 +81,7 @@ while [[ $n < $N_MAX ]]; do
   if (( $(echo "$e0_new - $e0 > -$ETOL && $e0_new - $e0 < $ETOL" | bc -l) )); then
     touch .done
     exit 0
-  elif (( $(echo "$e0_new > $e0 + $CONV_THR" | bc -l) )); then
+  elif (( $(echo "$e0_new > $e0 + $CONV_THR" | bc -l) && $n > 2 )); then
     touch .not_converging
     exit 1
   else

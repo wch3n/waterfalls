@@ -9,7 +9,14 @@ if [ ! -d $1 ]; then
 fi
 
 for i in $workdir/OSZICAR.*; do printf ${i##*.}; grep E0 $i | tail -n 1; done > $tmpfile
-nmax=$(sort -n -k 4 $tmpfile | head -n 1 | awk '{print $1}')
+nmax=$(sort -g -k 4 $tmpfile | head -n 1 | awk '{print $1}')
+ntotal=$(sort -nr -k 1 $tmpfile | head -n 1 | awk '{print $1}')
+rm -f $tmpfile
+if (( nmax == ntotal )); then
+  echo "reopt not needed."
+  exit 0
+fi
+
 if [ -f $workdir/CHGCAR.$nmax ]; then 
   cp -f $workdir/CHGCAR.$nmax $workdir/CHGCAR
   echo "CHGCAR.$nmax ready"
@@ -32,5 +39,4 @@ else
   echo "ICHARG set"
 fi
 
-rm -f $tmpfile
 touch $workdir/.reopt_done
